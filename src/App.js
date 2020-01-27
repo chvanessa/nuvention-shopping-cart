@@ -34,15 +34,34 @@ const handlePrices = (price) => {
   return price.toFixed(2);
 }
 
-const incrementCount = (p, cart) => {
-  console.log("increment count called")
-  cart.filter(y => y !== p);
-  for (var i in cart) {
-    if (cart[i].sku == p.sku) {
-       cart[i].ct += 1;
-       break; //Stop this loop, we found it!
-    }
+// returns updated cart
+const handleCart = (p, cart) => {
+  if (cart === undefined || cart.length === 0) {
+    console.log("nothing in cart");
+    return cart.concat({sku:p.sku, ct:0, price:p.price, title:p.title}); 
   }
+  else {
+    console.log("trying to modify cart");
+    var newobj = {sku:p.sku, ct:0, price:p.price, title:p.title};
+    
+
+    for (var i in cart) {
+      console.log("cart[i]", cart[i]);
+      if (cart[i].sku == p.sku) {
+        // Increase quantity of existing item
+        var newcount = cart[i].ct + 1;
+        console.log("newcount", newcount);
+        var updatedobj = {sku:p.sku, ct:newcount, price:p.price, title:p.title};
+        var tempcart = cart.filter(y => y.sku !== p.sku);
+        console.log("cart with removed item:", tempcart)
+        return tempcart.concat(updatedobj);
+      }
+    }
+
+    // If item does not exist in cart yet
+    console.log("item not in cart yet!");
+    return cart.concat(newobj); 
+}
 }
 
 const ProductList = ({products, inCart, addToCart, onSetSidebarOpen}) => {
@@ -60,10 +79,8 @@ const ProductList = ({products, inCart, addToCart, onSetSidebarOpen}) => {
             <br/>
             {sizes.map(size => <Button>{size}</Button>)}
             <Button onClick={() => {
-              addToCart(
-                // fix this part so that it updates count if product is already in the count, adds new item if it isn't
-                inCart.includes(product.sku) ?  incrementCount(product, inCart):
-                inCart.concat({sku:product.sku, ct:0, price:product.price, title:product.title})); onSetSidebarOpen(true)}}>Add to Cart</Button>
+              addToCart(handleCart(product, inCart)); onSetSidebarOpen(true)}}>
+              Add to Cart</Button>
             </ProductInfo>
           </CardContent>
         </Card>
