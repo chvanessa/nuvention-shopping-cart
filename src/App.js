@@ -35,14 +35,14 @@ const handlePrices = (price) => {
 }
 
 // returns updated cart
-const handleCart = (p, cart) => {
+const addToCart = (p, cart) => {
   if (cart === undefined || cart.length === 0) {
     console.log("nothing in cart");
-    return cart.concat({sku:p.sku, ct:0, price:p.price, title:p.title}); 
+    return cart.concat({sku:p.sku, ct:1, price:p.price, title:p.title}); 
   }
   else {
     console.log("trying to modify cart");
-    var newobj = {sku:p.sku, ct:0, price:p.price, title:p.title};
+    var newobj = {sku:p.sku, ct:1, price:p.price, title:p.title};
     
 
     for (var i in cart) {
@@ -64,7 +64,39 @@ const handleCart = (p, cart) => {
 }
 }
 
-const ProductList = ({products, inCart, addToCart, onSetSidebarOpen}) => {
+const removeFromCart = (p, cart) => {
+  if (cart === undefined || cart.length === 0) {
+    console.log("nothing in cart, this should not be possible >:(");
+    return cart; 
+  }
+  else {
+    console.log("trying to modify cart");
+    
+    for (var i in cart) {
+      console.log("cart[i]", cart[i]);
+      if (cart[i].sku == p.sku) {
+        // Decrease quantity of existing item
+        var newcount = cart[i].ct - 1;
+        var tempcart = cart.filter(y => y.sku !== p.sku);
+        console.log("cart with removed item:", tempcart)
+
+        // Remove item completely if count becomes 0
+        if (newcount === 0) {
+          return tempcart;
+        }
+        // Otherwise just decrement the count
+        else {
+          console.log("newcount", newcount);
+          var updatedobj = {sku:p.sku, ct:newcount, price:p.price, title:p.title};
+          return tempcart.concat(updatedobj);
+        }
+        
+      }
+    }
+}
+}
+
+const ProductList = ({products, inCart, updateCart, onSetSidebarOpen}) => {
   const sizes = ['S', 'M', 'L','XL']
   return (
     <Column.Group multiline>
@@ -79,7 +111,7 @@ const ProductList = ({products, inCart, addToCart, onSetSidebarOpen}) => {
             <br/>
             {sizes.map(size => <Button>{size}</Button>)}
             <Button onClick={() => {
-              addToCart(handleCart(product, inCart)); onSetSidebarOpen(true)}}>
+              updateCart(addToCart(product, inCart)); onSetSidebarOpen(true)}}>
               Add to Cart</Button>
             </ProductInfo>
           </CardContent>
@@ -93,7 +125,7 @@ const App = () => {
   const [data, setData] = useState({});
   const [sidebarOpen, onSetSidebarOpen] = useState(false);
   const products = Object.values(data);
-  const [inCart, addToCart] = useState([]);
+  const [inCart, updateCart] = useState([]);
   useEffect(() => {
     const fetchProducts = async () => {
       const response = await fetch('./data/products.json');
@@ -119,6 +151,9 @@ const App = () => {
             <h6>${handlePrices(item.price)}</h6>
             <br/>
             count:{item.ct}
+            <Button onClick={() => {
+              updateCart(removeFromCart(item, inCart)); onSetSidebarOpen(true)}}>
+              X</Button>
             </ProductInfo>
           </CardContent>
         </Card>
@@ -137,7 +172,7 @@ const App = () => {
         </Button>
         </CartContainer>
       </Sidebar>
-      <ProductList products={products} inCart={inCart} addToCart={addToCart} onSetSidebarOpen={onSetSidebarOpen}></ProductList>
+      <ProductList products={products} inCart={inCart} updateCart={updateCart} onSetSidebarOpen={onSetSidebarOpen}></ProductList>
     </Container>
   );
 };
